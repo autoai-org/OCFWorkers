@@ -1,0 +1,1 @@
+python hf_worker.py --model-name openlm-research/open_llama_7b --model-class LlamaForCausalLM

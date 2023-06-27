@@ -6,29 +6,23 @@ from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM, LlamaFo
 
 from _base import InferenceWorker
 
-def translate_chatml_to_openchat(prompt):
-    prompt = prompt.replace('<|im_start|>system\n', '<human>: ')
-    prompt = prompt.replace('<|im_start|>user\n', '<human>: ')
-    prompt = prompt.replace('<|im_start|>assistant\n', '<bot>: ')
-    prompt = prompt.replace('<|im_start|>user', '<human>:')
-    prompt = prompt.replace('<|im_start|>assistant', '<bot>:')
-    prompt = prompt.replace('\n<|im_end|>', '')
-    prompt = prompt.replace('<|im_end|>', '')
-    prompt = prompt.rstrip()
-    return prompt
-
 model_class_mapping = {
     'AutoModel': AutoModel,
     'AutoModelForCausalLM': AutoModelForCausalLM,
     'LlamaForCausalLM': LlamaForCausalLM
 }
 
+dtype_mapping = {
+    'float16': torch.float16,
+    'bfloat16': torch.bfloat16,
+}
+
 class HFWorker(InferenceWorker):
-    def __init__(self, model_name, fast_tokenizer, model_class) -> None:
+    def __init__(self, model_name, fast_tokenizer, model_class, trust_remote_code, dtype) -> None:
         super().__init__(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=fast_tokenizer)
         self.model = model_class_mapping[model_class].from_pretrained(
-            model_name, torch_dtype=torch.float16, device_map='auto',
+            model_name, torch_dtype=dtype_mapping[dtype], device_map='auto', trust_remote_code=trust_remote_code
         )
 
     async def handle_requests(self, msg):
@@ -37,8 +31,8 @@ class HFWorker(InferenceWorker):
         temperature = msg.get('temperature', 0.9)
         top_k = msg.get('top_k', 50)
         top_p = msg.get('top_p', 0.9)
-
         input_ids = self.tokenizer(prompt, return_tensors="pt").input_ids
+        input_ids = input_ids.to(self.model.device)
         generation_output = self.model.generate(
             input_ids=input_ids,
             max_new_tokens=max_new_tokens,
@@ -65,9 +59,11 @@ if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-name", type=str, default="openlm-research/open_llama_7b")
     parser.add_argument("--fast-tokenizer", action="store_true", default=False)
+    parser.add_argument("--trust-remote-code", action="store_true", default=False)
     parser.add_argument('--model-class', type=str, default='AutoModelForCausalLM')
+    parser.add_argument('--dtype', type=str, default='float16')
 
     args = parser.parse_args()
     logger.info(f"args: {args}")
-    worker = HFWorker(args.model_name, args.fast_tokenizer, args.model_class)
+    worker = HFWorker(args.model_name, args.fast_tokenizer, args.model_class, args.trust_remote_code, args.dtype)
     worker.start()

@@ -1,1 +1,1 @@
-python hf_worker.py --model-name togethercomputer/RedPajama-INCITE-7B-Base
+python hf_worker.py --model-name togethercomputer/RedPajama-INCITE-7B-Chat --fast-tokenizer

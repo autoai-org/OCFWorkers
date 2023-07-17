@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python hf_sd_worker.py --model-name stabilityai/stable-diffusion-xl-base-0.9

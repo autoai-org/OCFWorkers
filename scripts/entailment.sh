@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=1 python hf_worker.py --model-name microsoft/deberta-large-mnli --model-class AutoModelForSequenceClassification --dtype float32

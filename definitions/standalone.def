@@ -1,0 +1,6 @@
+Bootstrap: docker
+From: huggingface/transformers-pytorch-gpu:latest
+
+%files
+    /app
+    /

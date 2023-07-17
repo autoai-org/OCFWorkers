@@ -1,0 +1,21 @@
+Bootstrap: docker
+From: huggingface/transformers-pytorch-gpu:latest
+
+%post
+    apt-get -y update
+    apt-get -y install fortune cowsay lolcat
+
+%files
+    src/ /app
+    requirements.txt /app/requirements.txt
+
+%post
+    pip install -r /app/requirements.txt
+
+
+%labels
+    Author dev@autoai.org
+    Version v0.0.1
+
+%help
+    This is a container used to connect to Open Compute Framework. 

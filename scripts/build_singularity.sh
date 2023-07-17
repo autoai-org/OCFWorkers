@@ -1,0 +1,1 @@
+singularity build definitions/worker.def worker.sif
